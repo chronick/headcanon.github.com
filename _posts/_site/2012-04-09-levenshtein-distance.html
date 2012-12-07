@@ -1,0 +1,124 @@
+<h1 id='levenshtein_distance'>Levenshtein Distance</h1>
+
+<h2 id='background'>Background</h2>
+
+<p>While attempting to solve one of the puzzles on Facebook&#8217;s careers page, I came across an interesting problem. This puzzle involved finding the edit distance between two words, or rather, how many atomic changes must be made to the first word in order for it to match the second. An atomic change in a word is defined as one of three things:</p>
+
+<p>-an addition of a letter -a removal of a letter -replacement of a letter with another letter</p>
+
+<p>So for instance, the edit distance between the words &#8220;kitten&#8221; and &#8220;sitting&#8221; is 3:</p>
+
+<pre><code>kitten -&gt; sitten
+sitten -&gt; sittin
+sittin -&gt; sitting</code></pre>
+
+<p>An algorithm to solve this problem was invented in 1965 by Russian-born Vladimir Levenshtein. Basically, it involves building a matrix of the edit distance between each substring of each word starting at the first letter and progressing towards the last letter of each word. When the algorithm is finished, the total edit distance is located in the topmost cell (or the last column and last row).</p>
+
+<h2 id='pseudocode'>Pseudocode</h2>
+
+<p><strong>found on wikipedia. See references below</strong></p>
+
+<pre><code>int LevenshteinDistance(char s[1..m], char t[1..n])
+{
+ // for all i and j, d[i,j] will hold the Levenshtein distance between
+ // the first i characters of s and the first j characters of t;
+ // note that d has (m+1)x(n+1) values
+ declare int d[0..m, 0..n]
+
+ for i from 0 to m
+   d[i, 0] := i // the distance of any first string to an empty second string
+ for j from 0 to n
+   d[0, j] := j // the distance of any second string to an empty first string
+
+ for j from 1 to n
+ {
+   for i from 1 to m
+   {
+     if s[i] = t[j] then  
+       d[i, j] := d[i-1, j-1]       // no operation required
+     else
+       d[i, j] := minimum
+                  (
+                    d[i-1, j] + 1,  // a deletion
+                    d[i, j-1] + 1,  // an insertion
+                    d[i-1, j-1] + 1 // a substitution
+                  )
+   }
+ }
+ return d[m,n]</code></pre>
+
+<p>}</p>
+
+<p>For the words &#8220;kitten&#8221; and &#8220;sitting&#8221;, this algorithm will generate the following matrix:</p>
+
+<pre><code>      k  i  t  t  e  n
+  [0  1  2  3  4  5  6]
+s [1  1  2  3  4  5  6]
+i [2  2  1  2  3  4  5]
+t [3  3  2  1  2  3  4]
+t [4  4  3  2  1  2  3]
+i [5  5  4  3  2  2  3]
+n [6  6  5  4  3  3  2]
+g [7  7  6  5  4  4  3] &lt;-- final answer is 3</code></pre>
+
+<h2 id='how_it_works'>How It Works</h2>
+
+<p>So, in order to understand how this works, consider the top left cell, which is 0. This means that the edit distance between two empty words is, quite obviously, zero. Now consider the last element of the first row, which is 6. This means that in order for the word &#8220;kitten&#8221; to equal to an empty string, then 6 letters must be removed, thus the edit distance of 6. Next, consider the cell two below that (last column, 3rd row), which is 5. This means that the edit distance between the word &#8220;kitten&#8221; and &#8220;si&#8221; is 5, since 4 letters must be removed, and &#8216;k&#8217; must be switched to &#8216;s&#8217;. Since the i is there, then the edit disance is one less. This progresses as such until all the letters that are similar are removed, and one more is added in this case to account for the extra letter that must be added, since the second word is longer than the first. Hopefully this should give you an idea of how it works. To try it out for yourself, I have included below an implementation of this algorithm in python.</p>
+
+<h2 id='further_reading'>Further Reading</h2>
+
+<p>http://en.wikipedia.org/wiki/Levenshtein_distance</p>
+
+<p>Implementation</p>
+
+<pre><code>import sys
+
+def listprintstr(astr):
+ return &#39;  &#39;.join(list(astr))
+
+def printLevDistMatrix(str1,str2,d):
+ print &quot;     &quot;,listprintstr(str1)
+ for i in range(len(d)):
+  print (&quot; &quot;+str2)[i],&#39;[&#39;+&#39;  &#39;.join([str(a) for a in d[i]])+&#39;]&#39;
+
+def LevDist(str1,str2,debug=False):
+ d = []
+ m = len(str1)
+ n = len(str2)
+
+ for i in range(n+1):
+  d.append([])
+  for i in range(m+1):
+   d[-1].append(0)
+ 
+ for i in range(m+1):
+  d[0][i] = i
+
+ for j in range(n+1):
+  d[j][0] = j
+ 
+ for j in range(1,m+1):
+  for i in range(1,n+1):
+
+   if str1[j-1] == str2[i-1]:
+    d[i][j] = d[i-1][j-1]
+   else:
+    d[i][j] = min(
+       d[i-1][j] + 1,
+       d[i][j-1] + 1,
+       d[i-1][j-1] + 1
+       )
+
+ if debug:
+  printLevDistMatrix(str1,str2,d)
+ 
+ return d[n][m]
+
+def main():
+ if len(sys.argv) &lt; 2:
+  print &quot;usage: %s &lt;word1&gt; &lt;word2&gt;&quot;%(sys.argv[0])
+ 
+ print LevDist(sys.argv[1],sys.argv[2],True)
+ 
+if __name__ == &#39;__main__&#39;:
+ main()</code></pre>
