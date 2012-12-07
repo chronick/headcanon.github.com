@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "new post"
+title: "Inserting the last command's argument into the current one in OSX"
 description: ""
 category: 
 tags: []
